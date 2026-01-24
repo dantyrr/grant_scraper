@@ -8,12 +8,14 @@ load_dotenv()
 # Research keywords based on your bibliography
 KEYWORDS = [
     # Core areas
-    "aging", "mitochondria", "mitochondrial", "immunology",
-    "cardiovascular", "atherosclerosis", "neuroinflammation",
-    # Specific topics
-    "bioenergetics", "respirometry", "T cell", "CD8",
-    "microglia", "inflammation", "oxidative stress",
-    "cardiac", "vascular", "senescence"
+    "aging", "cardiovascular", "atherosclerosis", "immunology",
+    # T cell immunology
+    "T cell", "CD8", "memory T cell", "clonal expansion",
+    # Cardiovascular/vascular
+    "aortic", "vascular", "cardiac", "inflammation",
+    # Methods/techniques
+    "flow cytometry", "spectral flow", "single-cell", "proteomics",
+    "high-dimensional", "proteome"
 ]
 
 # NIH Reporter API settings
