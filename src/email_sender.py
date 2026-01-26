@@ -73,13 +73,13 @@ def build_digest_html(awards: list[dict], nofos: list[dict]) -> str:
 
     awards_html = ""
     if awards:
-        awards_html = "".join(format_award_html(a) for a in awards[:20])  # Limit to top 20
+        awards_html = "".join(format_award_html(a) for a in awards)
     else:
         awards_html = "<p>No new R01 awards matching your keywords this week.</p>"
 
     nofos_html = ""
     if nofos:
-        nofos_html = "".join(format_nofo_html(n) for n in nofos[:15])  # Limit to top 15
+        nofos_html = "".join(format_nofo_html(n) for n in nofos)
     else:
         nofos_html = "<p>No new funding opportunities matching your keywords this week.</p>"
 
@@ -156,7 +156,7 @@ def build_plain_text(awards: list[dict], nofos: list[dict]) -> str:
     ]
 
     if awards:
-        for a in awards[:20]:
+        for a in awards:
             lines.append(f"\n{a.get('title', 'No title')}")
             lines.append(f"  PI: {a.get('pi_name', 'Unknown')}")
             lines.append(f"  Org: {a.get('organization', 'Unknown')}")
@@ -171,7 +171,7 @@ def build_plain_text(awards: list[dict], nofos: list[dict]) -> str:
     ])
 
     if nofos:
-        for n in nofos[:15]:
+        for n in nofos:
             lines.append(f"\n{n.get('title', 'No title')}")
             lines.append(f"  Published: {n.get('published', 'Unknown')}")
             lines.append(f"  URL: {n.get('link', 'N/A')}")
