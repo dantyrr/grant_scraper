@@ -23,6 +23,12 @@ NIH_REPORTER_API_URL = "https://api.reporter.nih.gov/v2/projects/search"
 ACTIVITY_CODES = ["R01"]
 DAYS_LOOKBACK = 7
 
+# Priority study sections (get +9 relevance score)
+PRIORITY_STUDY_SECTIONS = ["AVI", "CDIN", "CMAD", "CMBG", "CMND", "BINP"]
+
+# Minimum relevance score to include in email
+MIN_RELEVANCE_SCORE = 5
+
 # NIH Guide RSS Feed
 NIH_GUIDE_RSS_URL = "https://grants.nih.gov/grants/guide/newsfeed/fundingopps.xml"
 

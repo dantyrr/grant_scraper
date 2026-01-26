@@ -8,7 +8,9 @@ from .config import (
     NIH_REPORTER_API_URL,
     ACTIVITY_CODES,
     DAYS_LOOKBACK,
-    KEYWORDS
+    KEYWORDS,
+    PRIORITY_STUDY_SECTIONS,
+    MIN_RELEVANCE_SCORE
 )
 
 
@@ -43,7 +45,8 @@ def build_search_query(keywords: list[str] = KEYWORDS) -> dict:
         "include_fields": [
             "ApplId", "ProjectTitle", "AbstractText", "ProjectNum",
             "ContactPiName", "Organization", "AwardNoticeDate",
-            "AwardAmount", "FiscalYear", "ProjectStartDate", "ProjectEndDate"
+            "AwardAmount", "FiscalYear", "ProjectStartDate", "ProjectEndDate",
+            "StudySection", "StudySectionName"
         ],
         "offset": 0,
         "limit": 500,
@@ -53,8 +56,26 @@ def build_search_query(keywords: list[str] = KEYWORDS) -> dict:
 
 
 def calculate_relevance_score(project: dict, keywords: list[str] = KEYWORDS) -> int:
-    """Calculate relevance score based on keyword matches in title and abstract."""
+    """Calculate relevance score based on keyword matches and study section.
+
+    Scoring:
+    - +9 for priority study sections (AVI, CDIN, CMAD, CMBG, CMND, BINP)
+    - +3 for each keyword match in title
+    - +1 for each keyword match in abstract
+    """
     score = 0
+
+    # Check study section - the API returns this as a dict with 'study_section_code'
+    study_section = project.get("study_section") or {}
+    if isinstance(study_section, dict):
+        section_code = study_section.get("study_section_code", "")
+    else:
+        section_code = ""
+
+    if section_code in PRIORITY_STUDY_SECTIONS:
+        score += 9
+
+    # Keyword matching
     title = (project.get("project_title") or "").lower()
     abstract = (project.get("abstract_text") or "").lower()
 
@@ -88,9 +109,12 @@ def fetch_new_awards(keywords: Optional[list[str]] = None) -> list[dict]:
 
         results = data.get("results", [])
 
-        # Add relevance scores and sort
+        # Add relevance scores
         for project in results:
             project["relevance_score"] = calculate_relevance_score(project, keywords)
+
+        # Filter by minimum relevance score
+        results = [r for r in results if r.get("relevance_score", 0) >= MIN_RELEVANCE_SCORE]
 
         # Sort by relevance score (highest first)
         results.sort(key=lambda x: x.get("relevance_score", 0), reverse=True)
@@ -117,6 +141,15 @@ def format_award_for_display(award: dict) -> dict:
     else:
         org_display = "Unknown Organization"
 
+    # Extract study section
+    study_section = award.get("study_section") or {}
+    if isinstance(study_section, dict):
+        section_code = study_section.get("study_section_code", "")
+        section_name = study_section.get("study_section_name", "")
+        study_section_display = f"{section_code}" if section_code else ""
+    else:
+        study_section_display = ""
+
     return {
         "title": award.get("project_title", "No title"),
         "pi_name": award.get("contact_pi_name", "Unknown PI"),
@@ -126,5 +159,6 @@ def format_award_for_display(award: dict) -> dict:
         "award_amount": award.get("award_amount"),
         "abstract": award.get("abstract_text", "No abstract available"),
         "relevance_score": award.get("relevance_score", 0),
+        "study_section": study_section_display,
         "nih_reporter_url": f"https://reporter.nih.gov/project-details/{award.get('appl_id', '')}"
     }

@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.ncbi.nlm.nih.gov)",
+      "WebFetch(domain:api.reporter.nih.gov)"
+    ]
+  }
+}

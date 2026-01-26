@@ -12,6 +12,10 @@ def format_award_html(award: dict) -> str:
     if award.get("award_amount"):
         amount_str = f"<br><strong>Award:</strong> ${award['award_amount']:,.0f}"
 
+    study_section_str = ""
+    if award.get("study_section"):
+        study_section_str = f"<br><strong>Study Section:</strong> {award['study_section']}"
+
     abstract = award.get("abstract", "No abstract available")
     # Truncate long abstracts
     if len(abstract) > 500:
@@ -29,6 +33,7 @@ def format_award_html(award: dict) -> str:
             <strong>Organization:</strong> {award.get('organization', 'Unknown')}<br>
             <strong>Project #:</strong> {award.get('project_number', 'N/A')}
             {amount_str}
+            {study_section_str}
         </p>
         <p style="color: #666; font-size: 0.9em; margin-bottom: 0;">
             {abstract}
