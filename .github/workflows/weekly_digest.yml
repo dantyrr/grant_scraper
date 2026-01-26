@@ -1,9 +1,11 @@
 name: Weekly NIH Grant Digest
 
 on:
-  # Run every Monday at 6:00 AM CST (12:00 UTC)
+  # Primary: Monday at 6:00 AM CST (12:00 UTC)
+  # Backup: Monday at 12:00 PM CST (18:00 UTC) - only runs if primary didn't
   schedule:
     - cron: '0 12 * * 1'
+    - cron: '0 18 * * 1'
 
   # Allow manual trigger for testing
   workflow_dispatch:
@@ -13,21 +15,53 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Check if digest already sent today (skip if backup run)
+        if: github.event.schedule == '0 18 * * 1'
+        id: check-already-ran
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Check if there was a successful run today (within last 12 hours)
+          RECENT_SUCCESS=$(gh run list \
+            --repo ${{ github.repository }} \
+            --workflow "Weekly NIH Grant Digest" \
+            --status success \
+            --created ">=$(date -u -d '12 hours ago' '+%Y-%m-%d')" \
+            --json conclusion,createdAt \
+            --jq 'length')
+
+          if [ "$RECENT_SUCCESS" -gt "0" ]; then
+            echo "Digest already sent today, skipping backup run"
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "No successful run today, proceeding with backup"
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Checkout repository
+        if: steps.check-already-ran.outputs.skip != 'true'
         uses: actions/checkout@v4
 
       - name: Set up Python
+        if: steps.check-already-ran.outputs.skip != 'true'
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
 
       - name: Install dependencies
+        if: steps.check-already-ran.outputs.skip != 'true'
         run: pip install -r requirements.txt
 
       - name: Run grant scraper and send digest
+        if: steps.check-already-ran.outputs.skip != 'true'
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
           EMAIL_RECIPIENT: ${{ secrets.EMAIL_RECIPIENT }}
         run: python -m src.main --send-email --verbose
+
+      - name: Keepalive - prevent workflow from being disabled
+        uses: gautamkrishnar/keepalive-workflow@v2
+        with:
+          time_elapsed: 45
