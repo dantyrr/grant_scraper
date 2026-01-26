@@ -60,8 +60,3 @@ jobs:
           EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
           EMAIL_RECIPIENT: ${{ secrets.EMAIL_RECIPIENT }}
         run: python -m src.main --send-email --verbose
-
-      - name: Keepalive - prevent workflow from being disabled
-        uses: gautamkrishnar/keepalive-workflow@v2
-        with:
-          time_elapsed: 45
