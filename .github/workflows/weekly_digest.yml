@@ -1,11 +1,10 @@
 name: Weekly NIH Grant Digest
 
 on:
-  # Primary: Monday at 6:00 AM CST (12:00 UTC)
-  # Backup: Monday at 12:00 PM CST (18:00 UTC) - only runs if primary didn't
-  schedule:
-    - cron: '0 12 * * 1'
-    - cron: '0 18 * * 1'
+  # Schedule disabled - using local macOS Launch Agent instead
+  # schedule:
+  #   - cron: '0 12 * * 1'
+  #   - cron: '0 18 * * 1'
 
   # Allow manual trigger for testing
   workflow_dispatch:
