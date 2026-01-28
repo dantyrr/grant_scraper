@@ -28,3 +28,7 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Runtime files
+.last_run_week
+*.log
