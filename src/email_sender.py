@@ -72,15 +72,21 @@ def format_nofo_html(nofo: dict) -> str:
     """
 
 
-def build_digest_html(awards: list[dict], nofos: list[dict]) -> str:
+def build_digest_html(new_awards: list[dict], other_awards: list[dict], nofos: list[dict]) -> str:
     """Build the complete HTML email digest."""
     date_str = datetime.now().strftime("%B %d, %Y")
 
-    awards_html = ""
-    if awards:
-        awards_html = "".join(format_award_html(a) for a in awards)
+    new_awards_html = ""
+    if new_awards:
+        new_awards_html = "".join(format_award_html(a) for a in new_awards)
     else:
-        awards_html = "<p>No new R01 awards matching your keywords this week.</p>"
+        new_awards_html = "<p>No new R01 awards matching your keywords this week.</p>"
+
+    other_awards_html = ""
+    if other_awards:
+        other_awards_html = "".join(format_award_html(a) for a in other_awards)
+    else:
+        other_awards_html = "<p>No renewals or continuations matching your keywords this week.</p>"
 
     nofos_html = ""
     if nofos:
@@ -124,12 +130,16 @@ def build_digest_html(awards: list[dict], nofos: list[dict]) -> str:
 
         <div class="summary">
             <strong>This Week's Summary:</strong><br>
-            New R01 Awards: {len(awards)}<br>
+            New R01 Awards: {len(new_awards)}<br>
+            Renewals &amp; Continuations: {len(other_awards)}<br>
             New Funding Opportunities: {len(nofos)}
         </div>
 
         <h2>New R01 Awards</h2>
-        {awards_html}
+        {new_awards_html}
+
+        <h2>Renewals &amp; Continuations</h2>
+        {other_awards_html}
 
         <h2>New Funding Opportunities (NOFOs)</h2>
         {nofos_html}
@@ -144,7 +154,7 @@ def build_digest_html(awards: list[dict], nofos: list[dict]) -> str:
     """
 
 
-def build_plain_text(awards: list[dict], nofos: list[dict]) -> str:
+def build_plain_text(new_awards: list[dict], other_awards: list[dict], nofos: list[dict]) -> str:
     """Build plain text version of the digest."""
     date_str = datetime.now().strftime("%B %d, %Y")
 
@@ -153,21 +163,37 @@ def build_plain_text(awards: list[dict], nofos: list[dict]) -> str:
         "=" * 50,
         "",
         f"This Week's Summary:",
-        f"  New R01 Awards: {len(awards)}",
+        f"  New R01 Awards: {len(new_awards)}",
+        f"  Renewals & Continuations: {len(other_awards)}",
         f"  New Funding Opportunities: {len(nofos)}",
         "",
         "NEW R01 AWARDS",
         "-" * 30,
     ]
 
-    if awards:
-        for a in awards:
+    if new_awards:
+        for a in new_awards:
             lines.append(f"\n{a.get('title', 'No title')}")
             lines.append(f"  PI: {a.get('pi_name', 'Unknown')}")
             lines.append(f"  Org: {a.get('organization', 'Unknown')}")
             lines.append(f"  URL: {a.get('nih_reporter_url', 'N/A')}")
     else:
         lines.append("\nNo new R01 awards matching your keywords this week.")
+
+    lines.extend([
+        "",
+        "RENEWALS & CONTINUATIONS",
+        "-" * 30,
+    ])
+
+    if other_awards:
+        for a in other_awards:
+            lines.append(f"\n{a.get('title', 'No title')}")
+            lines.append(f"  PI: {a.get('pi_name', 'Unknown')}")
+            lines.append(f"  Org: {a.get('organization', 'Unknown')}")
+            lines.append(f"  URL: {a.get('nih_reporter_url', 'N/A')}")
+    else:
+        lines.append("\nNo renewals or continuations matching your keywords this week.")
 
     lines.extend([
         "",
@@ -186,7 +212,7 @@ def build_plain_text(awards: list[dict], nofos: list[dict]) -> str:
     return "\n".join(lines)
 
 
-def send_digest(awards: list[dict], nofos: list[dict]) -> bool:
+def send_digest(new_awards: list[dict], other_awards: list[dict], nofos: list[dict]) -> bool:
     """Send the weekly digest email via Resend."""
     if not RESEND_API_KEY:
         print("Error: RESEND_API_KEY not configured")
@@ -201,7 +227,7 @@ def send_digest(awards: list[dict], nofos: list[dict]) -> bool:
     date_str = datetime.now().strftime("%B %d, %Y")
     subject = f"NIH Grant Digest - {date_str}"
 
-    html_content = build_digest_html(awards, nofos)
+    html_content = build_digest_html(new_awards, other_awards, nofos)
 
     try:
         params = {

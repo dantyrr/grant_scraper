@@ -11,10 +11,11 @@ from .email_sender import send_digest, build_digest_html, build_plain_text
 def run_scraper(send_email: bool = True, verbose: bool = False) -> dict:
     """Run the grant scraper and optionally send email digest."""
 
-    print("Fetching new R01 awards from NIH Reporter...")
-    raw_awards = fetch_new_awards()
-    awards = [format_award_for_display(a) for a in raw_awards]
-    print(f"  Found {len(awards)} matching awards")
+    print("Fetching R01 awards from NIH Reporter...")
+    raw = fetch_new_awards()
+    new_awards = [format_award_for_display(a) for a in raw["new"]]
+    other_awards = [format_award_for_display(a) for a in raw["other"]]
+    print(f"  Found {len(new_awards)} new R01 awards, {len(other_awards)} renewals/continuations")
 
     print("Fetching new NOFOs from NIH Guide...")
     raw_nofos = fetch_nofos()
@@ -23,8 +24,8 @@ def run_scraper(send_email: bool = True, verbose: bool = False) -> dict:
 
     if verbose:
         print("\n" + "=" * 50)
-        print("TOP AWARDS:")
-        for award in awards[:5]:
+        print("TOP NEW AWARDS:")
+        for award in new_awards[:5]:
             print(f"  - {award['title'][:60]}...")
             print(f"    PI: {award['pi_name']}, Score: {award['relevance_score']}")
 
@@ -36,18 +37,17 @@ def run_scraper(send_email: bool = True, verbose: bool = False) -> dict:
 
     if send_email:
         print("Sending email digest...")
-        success = send_digest(awards, nofos)
+        success = send_digest(new_awards, other_awards, nofos)
         if success:
             print("Email sent successfully!")
         else:
             print("Failed to send email.")
-            return {"success": False, "awards": len(awards), "nofos": len(nofos)}
+            return {"success": False, "new_awards": len(new_awards), "other_awards": len(other_awards), "nofos": len(nofos)}
     else:
         print("\nEmail sending disabled. Use --send-email to send.")
-        # Print plain text summary instead
-        print("\n" + build_plain_text(awards, nofos))
+        print("\n" + build_plain_text(new_awards, other_awards, nofos))
 
-    return {"success": True, "awards": len(awards), "nofos": len(nofos)}
+    return {"success": True, "new_awards": len(new_awards), "other_awards": len(other_awards), "nofos": len(nofos)}
 
 
 def main():
@@ -74,11 +74,12 @@ def main():
     args = parser.parse_args()
 
     if args.html_preview:
-        raw_awards = fetch_new_awards()
-        awards = [format_award_for_display(a) for a in raw_awards]
+        raw = fetch_new_awards()
+        new_awards = [format_award_for_display(a) for a in raw["new"]]
+        other_awards = [format_award_for_display(a) for a in raw["other"]]
         raw_nofos = fetch_nofos()
         nofos = [format_nofo_for_display(n) for n in raw_nofos]
-        print(build_digest_html(awards, nofos))
+        print(build_digest_html(new_awards, other_awards, nofos))
         return
 
     result = run_scraper(send_email=args.send_email, verbose=args.verbose)

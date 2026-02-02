@@ -90,8 +90,11 @@ def calculate_relevance_score(project: dict, keywords: list[str] = KEYWORDS) -> 
     return score
 
 
-def fetch_new_awards(keywords: Optional[list[str]] = None) -> list[dict]:
-    """Fetch new R01 awards matching keywords from NIH Reporter API."""
+def fetch_new_awards(keywords: Optional[list[str]] = None) -> dict:
+    """Fetch R01 awards matching keywords from NIH Reporter API.
+
+    Returns a dict with 'new' (type 1) and 'other' (renewals/continuations) lists.
+    """
     if keywords is None:
         keywords = KEYWORDS
 
@@ -119,11 +122,15 @@ def fetch_new_awards(keywords: Optional[list[str]] = None) -> list[dict]:
         # Sort by relevance score (highest first)
         results.sort(key=lambda x: x.get("relevance_score", 0), reverse=True)
 
-        return results
+        # Split into new (type 1) vs renewals/continuations
+        new_awards = [r for r in results if (r.get("project_num") or "").strip().startswith("1")]
+        other_awards = [r for r in results if not (r.get("project_num") or "").strip().startswith("1")]
+
+        return {"new": new_awards, "other": other_awards}
 
     except requests.RequestException as e:
         print(f"Error fetching NIH Reporter data: {e}")
-        return []
+        return {"new": [], "other": []}
 
 
 def format_award_for_display(award: dict) -> dict:
